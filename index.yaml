@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  iCEFARM:
+  - apiVersion: v2
+    appVersion: 1.0.1
+    created: "2025-12-27T04:59:17.116468342Z"
+    description: A Helm chart for Kubernetes
+    digest: 088b336d744db6d0bd0b7fcbe69849b7b1998363d8fe3aa3c78d7276f4466982
+    name: iCEFARM
+    type: application
+    urls:
+    - https://github.com/heiljj/iCEFARM-helm/releases/download/iCEFARM-0.1.2/iCEFARM-0.1.2.tgz
+    version: 0.1.2
+generated: "2025-12-27T04:59:17.116474133Z"
