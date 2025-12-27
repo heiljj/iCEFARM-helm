@@ -1,10 +1,61 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: DaemonSet
 metadata:
-  name: nginx
+  name: worker-arm64-ds
+
 spec:
-  containers:
-  - name: nginx
-    image: nginx:1.14.2
-    ports:
-    - containerPort: 80
+    selector:
+      matchLabels:
+        name: worker-arm64
+
+    template:
+      metadata:
+        labels:
+          name: worker-arm64
+
+      spec:
+        nodeSelector:
+          kubernetes.io/arch: arm64
+
+        # TODO
+        # This is needed to get udev events,
+        # seems to be workaround but not a priority atm
+        # https://stackoverflow.com/questions/49687378/how-to-get-hosts-udev-events-from-a-docker-container
+        hostNetwork: true
+
+        containers:
+        - name: worker
+          image: usbipiceproject/usbipice-worker:arm
+          imagePullPolicy: Always
+
+          # command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
+          command: ["tail", "-f", "/dev/null"]
+
+          securityContext:
+            privileged: true
+
+          volumeMounts:
+            - mountPath: /dev
+              name: devs
+
+            - mountPath: /run/udev
+              name: udev
+
+          env:
+            - name: USBIPICE_DATABASE
+              value: {{.Values.database}}
+            - name: USBIPICE_CONTROL_SERVER
+              value: {{.Values.control}}
+            - name: USBIPICE_DEFAULT
+              value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
+            - name: USBIPICE_PULSE_COUNT
+              value: src/usbipice/worker/firmware/pulse_count/build/bitstream_over_usb.uf2
+
+        volumes:
+          - name: devs
+            hostPath:
+              path: /dev
+
+          - name: udev
+            hostPath:
+              path: /run/udev
