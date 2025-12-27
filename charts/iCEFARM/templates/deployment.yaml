@@ -28,8 +28,7 @@ spec:
           image: usbipiceproject/usbipice-worker:arm
           imagePullPolicy: Always
 
-          # command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
-          command: ["tail", "-f", "/dev/null"]
+          command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
 
           securityContext:
             privileged: true
