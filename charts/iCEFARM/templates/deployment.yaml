@@ -17,10 +17,6 @@ spec:
         nodeSelector:
           kubernetes.io/arch: arm64
 
-        # TODO
-        # This is needed to get udev events,
-        # seems to be workaround but not a priority atm
-        # https://stackoverflow.com/questions/49687378/how-to-get-hosts-udev-events-from-a-docker-container
         hostNetwork: true
 
         containers:
@@ -43,8 +39,10 @@ spec:
           env:
             - name: USBIPICE_DATABASE
               value: {{.Values.database}}
+
             - name: USBIPICE_CONTROL_SERVER
-              value: {{.Values.control}}
+              value: http://control.default.svc.cluster.local:8080
+
             - name: USBIPICE_DEFAULT
               value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
             - name: USBIPICE_PULSE_COUNT
@@ -63,3 +61,122 @@ spec:
           - name: udev
             hostPath:
               path: /run/udev
+
+---
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: worker-amd64-ds
+
+spec:
+    selector:
+      matchLabels:
+        name: worker-amd64
+
+    template:
+      metadata:
+        labels:
+          name: worker-amd64
+
+      spec:
+        nodeSelector:
+          kubernetes.io/arch: amd64
+
+        hostNetwork: true
+
+        containers:
+        - name: worker
+          image: usbipiceproject/usbipice-worker:amd
+          imagePullPolicy: Always
+
+          command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
+
+          securityContext:
+            privileged: true
+
+          volumeMounts:
+            - mountPath: /dev
+              name: devs
+
+            - mountPath: /run/udev
+              name: udev
+
+          env:
+            - name: USBIPICE_DATABASE
+              value: {{.Values.database}}
+
+            - name: USBIPICE_CONTROL_SERVER
+              value: http://control.default.svc.cluster.local:8080
+
+            - name: USBIPICE_DEFAULT
+              value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
+            - name: USBIPICE_PULSE_COUNT
+              value: src/usbipice/worker/firmware/pulse_count/build/bitstream_over_usb.uf2
+
+            - name: USBIPICE_WORKER_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+        volumes:
+          - name: devs
+            hostPath:
+              path: /dev
+
+          - name: udev
+            hostPath:
+              path: /run/udev
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: control
+
+  template:
+    metadata:
+      labels:
+        app: control
+
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+
+      containers:
+      - name: control
+        image: usbipiceproject/usbipice-worker:amd
+        imagePullPolicy: Always
+
+        command: [".venv/bin/uvicorn", "usbipice.control.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8082", "--factory", "--host", "0.0.0.0"]
+
+        ports:
+        - containerPort: 8082
+
+        env:
+          - name: USBIPICE_DATABASE
+            value: {{.Values.database}}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: control
+  labels:
+    app: control
+
+spec:
+  selector:
+    app: control
+
+  ports:
+    - port: 8080
+      targetPort: 8082
