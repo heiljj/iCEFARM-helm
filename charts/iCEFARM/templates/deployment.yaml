@@ -53,6 +53,9 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
 
+            - name: USBIPICE_WORKER_LOGS
+              value: worker_log
+
         volumes:
           - name: devs
             hostPath:
@@ -118,6 +121,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+
+            - name: USBIPICE_WORKER_LOGS
+              value: worker_log
 
         volumes:
           - name: devs
