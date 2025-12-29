@@ -40,9 +40,6 @@ spec:
             - name: USBIPICE_DATABASE
               value: {{.Values.database}}
 
-            - name: USBIPICE_CONTROL_SERVER
-              value: http://control.default.svc.cluster.local:8080
-
             - name: USBIPICE_DEFAULT
               value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
             - name: USBIPICE_PULSE_COUNT
@@ -108,9 +105,6 @@ spec:
           env:
             - name: USBIPICE_DATABASE
               value: {{.Values.database}}
-
-            - name: USBIPICE_CONTROL_SERVER
-              value: http://control.default.svc.cluster.local:8080
 
             - name: USBIPICE_DEFAULT
               value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
