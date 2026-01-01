@@ -1,93 +1,24 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: worker-arm64-ds
+  name: worker
 
 spec:
     selector:
       matchLabels:
-        name: worker-arm64
+        name: worker
 
     template:
       metadata:
         labels:
-          name: worker-arm64
+          name: worker
 
       spec:
-        nodeSelector:
-          kubernetes.io/arch: arm64
-
         hostNetwork: true
 
         containers:
         - name: worker
-          image: usbipiceproject/usbipice-worker:arm
-          imagePullPolicy: Always
-
-          command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
-
-          securityContext:
-            privileged: true
-
-          volumeMounts:
-            - mountPath: /dev
-              name: devs
-
-            - mountPath: /run/udev
-              name: udev
-
-          env:
-            - name: USBIPICE_DATABASE
-              value: {{.Values.database}}
-
-            - name: USBIPICE_DEFAULT
-              value: src/usbipice/worker/firmware/default/build/default_firmware.uf2
-            - name: USBIPICE_PULSE_COUNT
-              value: src/usbipice/worker/firmware/pulse_count/build/bitstream_over_usb.uf2
-
-            - name: USBIPICE_WORKER_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-
-            - name: USBIPICE_WORKER_LOGS
-              value: worker_log
-
-        volumes:
-          - name: devs
-            hostPath:
-              path: /dev
-
-          - name: udev
-            hostPath:
-              path: /run/udev
-
----
-
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: worker-amd64-ds
-
-spec:
-    selector:
-      matchLabels:
-        name: worker-amd64
-
-    template:
-      metadata:
-        labels:
-          name: worker-amd64
-
-      spec:
-        nodeSelector:
-          kubernetes.io/arch: amd64
-
-        hostNetwork: true
-
-        containers:
-        - name: worker
-          image: usbipiceproject/usbipice-worker:amd
+          image: usbipiceproject/usbipice-worker:all
           imagePullPolicy: Always
 
           command: [".venv/bin/uvicorn", "usbipice.worker.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8081", "--factory", "--host", "0.0.0.0"]
@@ -152,7 +83,7 @@ spec:
 
       containers:
       - name: control
-        image: usbipiceproject/usbipice-worker:amd
+        image: usbipiceproject/usbipice-worker:all
         imagePullPolicy: Always
 
         command: [".venv/bin/uvicorn", "usbipice.control.app:run_uvicorn", "--env-file", ".uvicorn_env_bridge", "--port", "8082", "--factory", "--host", "0.0.0.0"]
@@ -174,6 +105,8 @@ metadata:
     app: control
 
 spec:
+  type: NodePort
+
   selector:
     app: control
 
